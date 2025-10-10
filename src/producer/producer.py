@@ -1,3 +1,4 @@
+import os
 import time
 import uuid
 
@@ -11,10 +12,10 @@ from sensor.metrics import get_system_metrics
 logger = setup_logger("Producer")
 config = MQTTConfig()
 
+INTERVAL = int(os.getenv("RUN_INTERVAL_SECONDS", 5))
 
-def publish_messages(
-    client: mqtt.Client, topic: str | None = None, interval: int = 5
-) -> None:
+
+def publish_messages(client: mqtt.Client, topic: str | None = None) -> None:
     if topic is None:
         topic = config.TOPIC
 
@@ -29,7 +30,7 @@ def publish_messages(
             else:
                 logger.error("Failed to publish message")
 
-            time.sleep(interval)
+            time.sleep(INTERVAL)
 
     except KeyboardInterrupt:
         logger.info("Producer stopped by user")

@@ -64,7 +64,7 @@ class SystemMetrics(BaseModel):
     timestamp: str = Field(..., description="Timestamp in ISO format")
     platform: str = Field(..., description="Operating system platform")
     cpu: CPUMetrics = Field(..., description="CPU metrics")
-    gpu: List[GPUMetrics] | None = Field(None, description="GPU metrics (NVIDIA/AMD)")
+    gpu: List[GPUMetrics] | None = Field(None, description="GPU metrics")
     ram: RAMMetrics = Field(..., description="RAM metrics")
     disk: DiskMetrics = Field(..., description="Disk metrics")
     temperature: List[TemperatureSensor] | None = Field(

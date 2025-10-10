@@ -34,6 +34,7 @@ services:
       MQTT_BROKER_HOST: mosquitto
       MQTT_BROKER_PORT: 1883
       MQTT_TOPIC: protexai/sensors
+      RUN_INTERVAL_SECONDS: 5
     volumes:
       - producer-logs:/logs
 
