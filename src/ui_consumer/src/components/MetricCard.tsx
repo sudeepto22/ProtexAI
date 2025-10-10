@@ -25,7 +25,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {value ? (
+        {value !== undefined ? (
           <div className={`text-3xl font-bold ${getUsageColor(value)}`}>
             {value}%
           </div>
