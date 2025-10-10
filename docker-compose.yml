@@ -37,6 +37,9 @@ services:
       MONGODB_URI: mongodb://protexai:protexai123@mongodb:27017/
       MONGODB_DATABASE: protexai
       MONGODB_COLLECTION: metrics
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
+      SLACK_CHANNEL: ${SLACK_CHANNEL:-#notifs}
+      SLACK_SEND_DURATION_SECONDS: ${SLACK_SEND_DURATION_SECONDS:-30}
     volumes:
       - consumer-logs:/logs
 

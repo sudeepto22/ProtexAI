@@ -8,10 +8,12 @@ from pymongo.collection import Collection
 from pymongo.errors import ConnectionFailure
 
 from common.config.mqtt_config import MQTTConfig
+from common.config.slack_config import SlackConfig
 from common.utils.logger import setup_logger
 from common.utils.mongodb_client import MongoDBClientManager
 from common.utils.mqtt_client import MQTTClient
 from sensor.model import SystemMetrics
+from slack.send_notification import send_slack_notification
 
 logger = setup_logger("Consumer")
 config = MQTTConfig()
@@ -19,18 +21,30 @@ config = MQTTConfig()
 MONGO_COLLECTION: Collection | None = None
 MAX_RETRIES = 5
 
+NOTIFICATION_TIMER = time.time()
+
+
+def insert_to_database(metrics: SystemMetrics) -> None:
+    """Insert metrics to MongoDB"""
+    if MONGO_COLLECTION is not None:
+        result = MONGO_COLLECTION.insert_one(metrics.to_dict())
+        logger.info(f"Stored to MongoDB with ID: {result.inserted_id}")
+
 
 def on_message(_client: mqtt.Client, _userdata: Any, msg: mqtt.MQTTMessage) -> None:
     """Handle incoming MQTT messages and store to MongoDB"""
+    global NOTIFICATION_TIMER
     try:
         message_json = msg.payload.decode("utf-8")
         metrics = SystemMetrics.from_json(message_json)
 
         logger.info(f"Metrics: {metrics}")
 
-        if MONGO_COLLECTION is not None:
-            result = MONGO_COLLECTION.insert_one(metrics.to_dict())
-            logger.info(f"Stored to MongoDB with ID: {result.inserted_id}")
+        insert_to_database(metrics)
+        if NOTIFICATION_TIMER + SlackConfig.SEND_DURATION_SECONDS > time.time():
+            NOTIFICATION_TIMER = time.time()
+            return
+        send_slack_notification(metrics)
 
     except Exception as e:
         logger.error(f"Failed to process message: {e}")
