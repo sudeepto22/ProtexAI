@@ -44,18 +44,9 @@ def on_message(_client: mqtt.Client, _userdata: Any, msg: mqtt.MQTTMessage) -> N
 
         # Send Slack notification if enough time has passed
         elapsed = time.time() - NOTIFICATION_TIMER
-        logger.info(
-            f"Slack check: elapsed={elapsed:.1f}s, threshold={SlackConfig.SEND_DURATION_SECONDS}s"
-        )
-
         if elapsed >= SlackConfig.SEND_DURATION_SECONDS:
-            logger.info("Sending Slack notification...")
             NOTIFICATION_TIMER = time.time()
-            send_slack_notification(metrics)
-        else:
-            logger.info(
-                f"Skipping Slack (wait {SlackConfig.SEND_DURATION_SECONDS - elapsed:.1f}s more)"
-            )
+            send_slack_notification(metrics, logger)
 
     except Exception as e:
         logger.error(f"Failed to process message: {e}")
