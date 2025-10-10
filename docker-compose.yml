@@ -16,8 +16,8 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: protexai
-      MONGO_INITDB_ROOT_PASSWORD: protexai123
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: protexai
     volumes:
       - mongodb-data:/data/db
@@ -35,7 +35,7 @@ services:
       MQTT_BROKER_HOST: mosquitto
       MQTT_BROKER_PORT: 1883
       MQTT_TOPIC: protexai/sensors
-      MONGODB_URI: mongodb://protexai:protexai123@mongodb:27017/
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/
       MONGODB_DATABASE: protexai
       MONGODB_COLLECTION: metrics
       SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
