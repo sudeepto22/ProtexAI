@@ -25,28 +25,7 @@ def publish_messages(
             result = client.publish(topic, metrics_json, qos=config.QOS)
 
             if result.rc == mqtt.MQTT_ERR_SUCCESS:
-                gpu_info = (
-                    f", GPU={metrics.gpu[0].load_percent}%"
-                    if metrics.gpu
-                    else ", GPU=N/A"
-                )
-                temp_info = (
-                    f", Temp={metrics.temperature[0].current_c}°C"
-                    if metrics.temperature
-                    else ", Temp=N/A"
-                )
-                cores_info = (
-                    f" ({metrics.cpu.cores_physical}P/{metrics.cpu.cores_logical}L cores)"
-                    if metrics.cpu.cores_physical
-                    else ""
-                )
-
-                logger.info(
-                    f"Published [{metrics.platform}]: "
-                    f"CPU={metrics.cpu.usage_percent}%{cores_info}{gpu_info}, "
-                    f"RAM={metrics.ram.used_gb}/{metrics.ram.total_gb}GB ({metrics.ram.usage_percent}%), "
-                    f"Disk={metrics.disk.used_gb}/{metrics.disk.total_gb}GB ({metrics.disk.usage_percent}%){temp_info}"
-                )
+                logger.info(f"Published: {metrics}")
             else:
                 logger.error("Failed to publish message")
 

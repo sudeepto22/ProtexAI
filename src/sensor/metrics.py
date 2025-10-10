@@ -91,6 +91,17 @@ def get_disk_usage() -> DiskMetrics:
 
 
 def get_temperature() -> list[TemperatureSensor] | None:
+    def get_sensor_type(label: str) -> str | None:
+        if not label:
+            return None
+        if "Tctl" in label or "Tdie" in label:
+            return "CPU"
+        if "edge" in label:
+            return "GPU"
+        if "Composite" in label:
+            return "SSD"
+        return None
+
     if platform.system() == "Linux":
         try:
             temps = psutil.sensors_temperatures()
@@ -100,12 +111,11 @@ def get_temperature() -> list[TemperatureSensor] | None:
                     formatted_temps.extend(
                         [
                             TemperatureSensor(
-                                label=entry.label or name,
-                                current_c=entry.current,
-                                high_c=entry.high if entry.high else None,
-                                critical_c=entry.critical if entry.critical else None,
+                                label=get_sensor_type(entry.label or name) or "Unknown",
+                                temperature_c=entry.current,
                             )
                             for entry in entries
+                            if get_sensor_type(entry.label or name)
                         ]
                     )
                 return formatted_temps

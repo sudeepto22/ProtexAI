@@ -20,29 +20,7 @@ def on_message(_client: mqtt.Client, _userdata: Any, msg: mqtt.MQTTMessage) -> N
         message_json = msg.payload.decode("utf-8")
         metrics = SystemMetrics.from_json(message_json)
 
-        # Format additional metrics
-        gpu_info = (
-            f", GPU={metrics.gpu[0].load_percent}%" if metrics.gpu else ", GPU=N/A"
-        )
-        temp_info = (
-            f", Temp={metrics.temperature[0].current_c}°C"
-            if metrics.temperature
-            else ", Temp=N/A"
-        )
-        cores_info = (
-            f" ({metrics.cpu.cores_physical}P/{metrics.cpu.cores_logical}L cores)"
-            if metrics.cpu.cores_physical
-            else ""
-        )
-
-        # Log comprehensive metrics
-        logger.info(
-            f"Metrics [{metrics.platform}]: "
-            f"CPU={metrics.cpu.usage_percent}%{cores_info}{gpu_info}, "
-            f"RAM={metrics.ram.used_gb}/{metrics.ram.total_gb}GB ({metrics.ram.usage_percent}%), "
-            f"Disk={metrics.disk.used_gb}/{metrics.disk.total_gb}GB ({metrics.disk.usage_percent}%){temp_info}, "
-            f"Timestamp={metrics.timestamp}"
-        )
+        logger.info(f"Metrics: {metrics}")
 
     except Exception as e:
         logger.error(f"Failed to parse message: {e}")
