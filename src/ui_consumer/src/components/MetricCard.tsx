@@ -1,24 +1,21 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { getUsageColor } from "../lib/color";
 
 interface MetricCardProps {
   title: string;
-  value: number;
-  unit?: string;
-  details: string[];
+  value?: number;
+  details?: string | null;
   temperature?: number | null;
   progressColor?: string;
-  getUsageColor: (percent: number) => string;
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({
   title,
   value,
-  unit = "%",
   details,
   temperature,
   progressColor = "bg-blue-500",
-  getUsageColor,
 }) => {
   return (
     <Card className="flex flex-col justify-between">
@@ -28,15 +25,14 @@ const MetricCard: React.FC<MetricCardProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className={`text-3xl font-bold ${getUsageColor(value)}`}>
-          {value}
-          {unit}
-        </div>
-        {details.map((detail, idx) => (
-          <p key={idx} className="text-xs text-slate-500 mt-2">
-            {detail}
-          </p>
-        ))}
+        {value ? (
+          <div className={`text-3xl font-bold ${getUsageColor(value)}`}>
+            {value}%
+          </div>
+        ) : (
+          <div className="text-3xl font-bold text-slate-500">N/A</div>
+        )}
+        {details && <p className="text-xs text-slate-500 mt-2">{details}</p>}
         {temperature && (
           <p className="text-xs text-slate-500 mt-1">
             Temperature: {temperature.toFixed(1)}°C

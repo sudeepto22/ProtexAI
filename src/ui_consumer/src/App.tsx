@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import mqtt, { MqttClient } from "mqtt";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import MetricCard from "./components/MetricCard";
+import { getUsageColor } from "./lib/color";
 
 interface SystemMetrics {
   timestamp: string;
@@ -43,26 +44,19 @@ function App() {
       process.env.REACT_APP_MQTT_BROKER || "ws://localhost:9001";
     const topic = process.env.REACT_APP_MQTT_TOPIC || "protexai/sensors";
 
-    console.log("Connecting to:", brokerUrl, "Topic:", topic);
-
     const client: MqttClient = mqtt.connect(brokerUrl, {
       clientId: `ui-consumer-${Math.random().toString(16).slice(2, 10)}`,
     });
 
     client.on("connect", () => {
-      console.log("Connected to MQTT");
       setConnected(true);
-      client.subscribe(topic, (err) => {
-        if (!err) {
-          console.log("Subscribed to:", topic);
-        }
-      });
+      client.subscribe(topic);
     });
 
     client.on("message", (_topic: string, message: Buffer) => {
       try {
         const data: SystemMetrics = JSON.parse(message.toString());
-        console.log("Received metrics:", data);
+
         setMetrics(data);
         setHistory((prev) => [data, ...prev].slice(0, 10));
       } catch (err) {
@@ -76,7 +70,6 @@ function App() {
     });
 
     client.on("close", () => {
-      console.log("Connection closed");
       setConnected(false);
     });
 
@@ -84,12 +77,6 @@ function App() {
       client.end();
     };
   }, []);
-
-  const getUsageColor = (percent: number): string => {
-    if (percent > 80) return "text-red-600";
-    if (percent > 60) return "text-yellow-600";
-    return "text-green-600";
-  };
 
   const getTempMap = (
     temps: SystemMetrics["temperature"]
@@ -158,49 +145,38 @@ function App() {
           <MetricCard
             title="CPU"
             value={metrics.cpu.usage_percent}
-            details={[
-              `${metrics.cpu.cores_physical}P / ${metrics.cpu.cores_logical}L cores`,
-            ]}
+            details={`${metrics.cpu.cores_physical}P / ${metrics.cpu.cores_logical}L cores`}
             temperature={cpuTemp}
             progressColor="bg-blue-500"
-            getUsageColor={getUsageColor}
           />
-
           <MetricCard
             title="RAM"
             value={metrics.ram.usage_percent}
-            details={[
-              `${metrics.ram.used_gb.toFixed(
-                1
-              )} / ${metrics.ram.total_gb.toFixed(1)} GB`,
-            ]}
+            details={`${metrics.ram.used_gb.toFixed(
+              1
+            )} / ${metrics.ram.total_gb.toFixed(1)} GB`}
             progressColor="bg-purple-500"
-            getUsageColor={getUsageColor}
           />
-
           <MetricCard
             title="Disk"
             value={metrics.disk.usage_percent}
-            details={[
-              `${metrics.disk.used_gb.toFixed(
-                1
-              )} / ${metrics.disk.total_gb.toFixed(1)} GB`,
-            ]}
+            details={`${metrics.disk.used_gb.toFixed(
+              1
+            )} / ${metrics.disk.total_gb.toFixed(1)} GB`}
             temperature={ssdTemp}
             progressColor="bg-orange-500"
-            getUsageColor={getUsageColor}
           />
-
-          {metrics.gpu && metrics.gpu.length > 0 && (
-            <MetricCard
-              title="GPU"
-              value={metrics.gpu[0].load_percent}
-              details={[`Memory: ${metrics.gpu[0].memory_usage_percent}%`]}
-              temperature={metrics.gpu[0].temperature_c}
-              progressColor="bg-pink-500"
-              getUsageColor={getUsageColor}
-            />
-          )}
+          <MetricCard
+            title="GPU"
+            value={metrics.gpu?.[0]?.load_percent}
+            details={
+              metrics.gpu?.[0]
+                ? `Memory: ${metrics.gpu?.[0]?.memory_usage_percent}%`
+                : null
+            }
+            temperature={metrics.gpu?.[0]?.temperature_c}
+            progressColor="bg-pink-500"
+          />
         </div>
 
         <div className="text-center text-sm text-slate-500">
