@@ -29,3 +29,7 @@ Thumbs.db
 docker-compose.override.yml
 
 .env
+
+# UI Consumer
+/node_modules/
+/build/

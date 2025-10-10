@@ -21,7 +21,7 @@ config = MQTTConfig()
 MONGO_COLLECTION: Collection | None = None
 MAX_RETRIES = 5
 
-NOTIFICATION_TIMER = time.time()
+NOTIFICATION_TIMER = 0.0  # Initialize to 0 so first notification sends immediately
 
 
 def insert_to_database(metrics: SystemMetrics) -> None:
@@ -41,10 +41,21 @@ def on_message(_client: mqtt.Client, _userdata: Any, msg: mqtt.MQTTMessage) -> N
         logger.info(f"Metrics: {metrics}")
 
         insert_to_database(metrics)
-        if NOTIFICATION_TIMER + SlackConfig.SEND_DURATION_SECONDS > time.time():
+
+        # Send Slack notification if enough time has passed
+        elapsed = time.time() - NOTIFICATION_TIMER
+        logger.info(
+            f"Slack check: elapsed={elapsed:.1f}s, threshold={SlackConfig.SEND_DURATION_SECONDS}s"
+        )
+
+        if elapsed >= SlackConfig.SEND_DURATION_SECONDS:
+            logger.info("Sending Slack notification...")
             NOTIFICATION_TIMER = time.time()
-            return
-        send_slack_notification(metrics)
+            send_slack_notification(metrics)
+        else:
+            logger.info(
+                f"Skipping Slack (wait {SlackConfig.SEND_DURATION_SECONDS - elapsed:.1f}s more)"
+            )
 
     except Exception as e:
         logger.error(f"Failed to process message: {e}")

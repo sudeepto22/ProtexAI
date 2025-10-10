@@ -5,19 +5,27 @@ from slack_sdk import WebClient
 from common.config.slack_config import SlackConfig
 from sensor.model import SystemMetrics
 
+logger = logging.getLogger("SlackNotification")
+
 
 def send_slack_notification(metrics: SystemMetrics) -> None:
     """Send notification to Slack"""
     try:
+        if not SlackConfig.BOT_TOKEN:
+            logger.warning("SLACK_BOT_TOKEN not configured, skipping notification")
+            return
+            
         client = WebClient(token=SlackConfig.BOT_TOKEN)
         message_payload = format_metrics_for_slack(metrics)
         response = client.chat_postMessage(**message_payload)
 
         if not response["ok"]:
-            logging.error(f"Failed to send notification: {response['error']}")
+            logger.error(f"Failed to send notification: {response['error']}")
+        else:
+            logger.info(f"Notification sent to Slack: {response['ts']}")
 
     except Exception as e:
-        logging.error(f"Error sending Slack notification: {e}")
+        logger.error(f"Error sending Slack notification: {e}")
 
 
 def format_metrics_for_slack(metrics: SystemMetrics) -> dict:

@@ -4,6 +4,7 @@ services:
     container_name: mosquitto
     ports:
       - "1883:1883"
+      - "9001:9001"
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
       - mosquitto-data:/mosquitto/data
@@ -57,6 +58,19 @@ services:
       RUN_INTERVAL_SECONDS: 5
     volumes:
       - producer-logs:/logs
+
+  ui_consumer:
+    build:
+      context: ./src/ui_consumer
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_MQTT_BROKER: ws://localhost:9001
+        REACT_APP_MQTT_TOPIC: protexai/sensors
+    container_name: ui-consumer
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mosquitto
 
 volumes:
   mosquitto-data:
