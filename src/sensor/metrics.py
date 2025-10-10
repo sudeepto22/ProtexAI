@@ -1,75 +1,100 @@
-import psutil
+import json
 import platform
-from datetime import datetime
 import subprocess
+from datetime import datetime
+
+import psutil
+
 from sensor.model import (
     CPUMetrics,
+    DiskMetrics,
     GPUMetrics,
     RAMMetrics,
-    DiskMetrics,
+    SystemMetrics,
     TemperatureSensor,
-    SystemMetrics
 )
 
+
 def get_cpu_usage() -> CPUMetrics:
-    cpu_percent_total = psutil.cpu_percent(interval=5)
-    cpu_percent_per_core = psutil.cpu_percent(interval=5, percpu=True)
+    cpu_percent_total = psutil.cpu_percent(interval=0)
+    cpu_percent_per_core = psutil.cpu_percent(interval=0, percpu=True)
     cpu_freq = psutil.cpu_freq()
     cpu_count_physical = psutil.cpu_count(logical=False)
     cpu_count_logical = psutil.cpu_count(logical=True)
-    
+
     return CPUMetrics(
         usage_percent=cpu_percent_total,
         usage_per_core=cpu_percent_per_core,
         frequency_mhz=round(cpu_freq.current, 2) if cpu_freq else None,
         cores_physical=cpu_count_physical,
-        cores_logical=cpu_count_logical
+        cores_logical=cpu_count_logical,
     )
+
 
 def get_gpu_usage() -> list[GPUMetrics] | None:
     try:
-        command = r'''rocm-smi --showuse --showmeminfo vram --showtemp --json'''
-        
+        command = r"""rocm-smi --showuse --showmeminfo vram --showtemp --json"""
+
         result = subprocess.run(
             command,
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
-            timeout=5
+            timeout=5,
         )
-        
+
         if result.returncode != 0 or not result.stdout.strip():
             return None
-        
+        data = json.loads(result.stdout)
+        a = [
+            GPUMetrics(
+                name=gpu_name,
+                load_percent=float(gpu_info["GPU use (%)"]),
+                memory_used_gb=round(
+                    float(gpu_info["VRAM Total Used Memory (B)"]) / 1024**3, 2
+                ),
+                memory_total_gb=float(gpu_info["VRAM Total Memory (B)"]) / 1024**3,
+                memory_usage_percent=round(
+                    float(gpu_info["VRAM Total Used Memory (B)"])
+                    / float(gpu_info["VRAM Total Memory (B)"]),
+                    2,
+                ),
+                temperature_c=float(gpu_info["Temperature (Sensor edge) (C)"]),
+            )
+            for gpu_name, gpu_info in data.items()
+        ]
+        print(a)
+        return a
+    except Exception as e:
+        print(e)
         return None
-        
-    except Exception:
-        return None
+
 
 def get_ram_usage() -> RAMMetrics:
     mem = psutil.virtual_memory()
-    
+
     return RAMMetrics(
         total_gb=round(mem.total / (1024**3), 2),
         available_gb=round(mem.available / (1024**3), 2),
         used_gb=round(mem.used / (1024**3), 2),
-        usage_percent=mem.percent
+        usage_percent=mem.percent,
     )
 
+
 def get_disk_usage() -> DiskMetrics:
-    disk = psutil.disk_usage('/')
-    
+    disk = psutil.disk_usage("/")
+
     return DiskMetrics(
         total_gb=round(disk.total / (1024**3), 2),
         used_gb=round(disk.used / (1024**3), 2),
         free_gb=round(disk.free / (1024**3), 2),
-        usage_percent=disk.percent
+        usage_percent=disk.percent,
     )
 
 
-def get_temperature() -> dict[str, list[TemperatureSensor]] | None:
-    if platform.system() == 'Linux':
+def get_temperature() -> list[TemperatureSensor] | None:
+    if platform.system() == "Linux":
         try:
             temps = psutil.sensors_temperatures()
             if temps:
@@ -81,8 +106,8 @@ def get_temperature() -> dict[str, list[TemperatureSensor]] | None:
                                 label=entry.label or name,
                                 current_c=entry.current,
                                 high_c=entry.high if entry.high else None,
-                                critical_c=entry.critical if entry.critical else None
-                            ) 
+                                critical_c=entry.critical if entry.critical else None,
+                            )
                             for entry in entries
                         ]
                     )
@@ -90,6 +115,7 @@ def get_temperature() -> dict[str, list[TemperatureSensor]] | None:
         except AttributeError:
             pass
     return None
+
 
 def get_system_metrics() -> SystemMetrics:
     return SystemMetrics(
@@ -99,5 +125,5 @@ def get_system_metrics() -> SystemMetrics:
         gpu=get_gpu_usage(),
         ram=get_ram_usage(),
         disk=get_disk_usage(),
-        temperature=get_temperature()
+        temperature=get_temperature(),
     )

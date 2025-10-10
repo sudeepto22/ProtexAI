@@ -1,22 +1,24 @@
-from pydantic import BaseModel, Field
 from typing import List
+
+from pydantic import BaseModel, Field
 
 
 class CPUMetrics(BaseModel):
     usage_percent: float = Field(..., description="Overall CPU usage percentage")
     usage_per_core: List[float] = Field(..., description="CPU usage per core")
-    frequency_mhz: float | None = Field(None, description="Current CPU frequency in MHz")
+    frequency_mhz: float | None = Field(
+        None, description="Current CPU frequency in MHz"
+    )
     cores_physical: int | None = Field(None, description="Number of physical cores")
     cores_logical: int | None = Field(None, description="Number of logical cores")
 
 
 class GPUMetrics(BaseModel):
-    id: int = Field(..., description="GPU ID")
     name: str = Field(..., description="GPU name/model")
     load_percent: float = Field(..., description="GPU load percentage")
-    memory_used_mb: float = Field(..., description="GPU memory used in MB")
-    memory_total_mb: float = Field(..., description="Total GPU memory in MB")
-    memory_percent: float = Field(..., description="GPU memory usage percentage")
+    memory_used_gb: float = Field(..., description="GPU memory used in GB")
+    memory_total_gb: float = Field(..., description="Total GPU memory in GB")
+    memory_usage_percent: float = Field(..., description="GPU memory usage percentage")
     temperature_c: float = Field(..., description="GPU temperature in Celsius")
 
 
@@ -48,19 +50,20 @@ class SystemMetrics(BaseModel):
     gpu: List[GPUMetrics] | None = Field(None, description="GPU metrics (NVIDIA/AMD)")
     ram: RAMMetrics = Field(..., description="RAM metrics")
     disk: DiskMetrics = Field(..., description="Disk metrics")
-    temperature: List[TemperatureSensor] | None = Field(None, description="Temperature sensors (Linux only)")
-    
+    temperature: List[TemperatureSensor] | None = Field(
+        None, description="Temperature sensors (Linux only)"
+    )
+
     def to_json(self) -> str:
         return self.model_dump_json()
-    
+
     @classmethod
-    def from_json(cls, json_str: str) -> 'SystemMetrics':
+    def from_json(cls, json_str: str) -> "SystemMetrics":
         return cls.model_validate_json(json_str)
-    
+
     def to_dict(self) -> dict:
         return self.model_dump()
-    
-    @classmethod
-    def from_dict(cls, data: dict) -> 'SystemMetrics':
-        return cls.model_validate(data)
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "SystemMetrics":
+        return cls.model_validate(data)
