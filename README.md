@@ -99,3 +99,18 @@ This script will:
 
 - **Docker**: `docker-compose logs -f [service_name]`
 - **Local**: Available in `src/logs/` directory
+
+## Sample Queries
+
+I have created 2 sample queries which fetches data from MongoDB
+
+- Latest 5 metrics
+- Average CPU and RAM usage
+
+```bash
+# Make the script executable
+chmod +x query_metrics.sh
+
+# Run the script
+./query_metrics.sh
+```
