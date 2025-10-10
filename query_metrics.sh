@@ -16,17 +16,17 @@ docker exec mongodb mongosh --quiet --username protexai --password protexai123 \
   --eval "
     db = db.getSiblingDB('protexai');
     db.metrics.find()
-      .sort({timestamp: -1})
-      .limit(5)
-      .forEach(doc => {
-        print('---');
-        print('Time:', doc.timestamp);
-        print('CPU:', doc.cpu.usage_percent + '%');
-        print('GPU:', doc.gpu.map(g => g.name + ' (' + g.load_percent + '%)').join(', '));
-        print('Temperature:', doc.temperature.map(t => t.name + ': ' + t.temperature_c + '°C').join(', '));
-        print('RAM:', doc.ram.used_gb + 'GB /' , doc.ram.total_gb + 'GB (' + doc.ram.usage_percent + '%)');
-        print('Disk:', doc.disk.used_gb + 'GB /' , doc.disk.total_gb + 'GB (' + doc.disk.usage_percent + '%)');
-      })
+    .sort({ timestamp: -1 })
+    .limit(5)
+    .forEach(doc => {
+      print('---');
+      print('Time:', doc.timestamp);
+      print('CPU:', doc.cpu.usage_percent + '%');
+      print('GPU:', doc.gpu ? doc.gpu.map(g => g.name + ' (' + g.load_percent + '%)').join(', ') : 'N/A');
+      print('Temperature:', doc.temperature ? doc.temperature.map(t => t.name + ': ' + t.temperature_c + '°C').join(', ') : 'N/A');
+      print('RAM:', doc.ram.used_gb + 'GB / ' + doc.ram.total_gb + 'GB (' + doc.ram.usage_percent + '%)');
+      print('Disk:', doc.disk.used_gb + 'GB / ' + doc.disk.total_gb + 'GB (' + doc.disk.usage_percent + '%)');
+    });
   "
 
 echo ""

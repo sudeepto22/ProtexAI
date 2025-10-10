@@ -60,6 +60,20 @@ services:
     volumes:
       - producer-logs:/logs
 
+  api:
+    build:
+      context: ./src
+      dockerfile: api/Dockerfile
+    container_name: protexai-api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongodb
+    environment:
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/
+      MONGODB_DATABASE: protexai
+      MONGODB_COLLECTION: metrics
+
   ui_consumer:
     build:
       context: ./src/ui_consumer
@@ -67,11 +81,13 @@ services:
       args:
         REACT_APP_MQTT_BROKER: ws://localhost:9001
         REACT_APP_MQTT_TOPIC: protexai/sensors
+        REACT_APP_API_URL: http://localhost:8000
     container_name: ui-consumer
     ports:
       - "3000:3000"
     depends_on:
       - mosquitto
+      - api
 
 volumes:
   mosquitto-data:

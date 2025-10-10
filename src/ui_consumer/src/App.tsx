@@ -38,6 +38,30 @@ function App() {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [connected, setConnected] = useState(false);
   const [history, setHistory] = useState<SystemMetrics[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch initial data from API
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
+        const response = await fetch(`${apiUrl}/metrics/latest?limit=10`);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.metrics && data.metrics.length > 0) {
+            setMetrics(data.metrics[0]);
+            setHistory(data.metrics);
+          }
+        }
+      } catch {
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
 
   useEffect(() => {
     const brokerUrl =
@@ -91,14 +115,14 @@ function App() {
     return tempMap;
   };
 
-  if (!connected) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Card className="w-96">
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-              <span>Connecting to MQTT broker...</span>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <span>Loading initial data...</span>
             </div>
           </CardContent>
         </Card>
@@ -112,8 +136,12 @@ function App() {
         <Card className="w-96">
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span>Waiting for metrics...</span>
+              <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+              <span>
+                {!connected
+                  ? "Connecting to MQTT broker..."
+                  : "Waiting for metrics..."}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -136,8 +164,12 @@ function App() {
             <p className="text-slate-600 mt-1">{metrics.platform}</p>
           </div>
           <div className="flex items-center space-x-2 text-sm text-slate-600">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>Connected</span>
+            <div
+              className={`w-2 h-2 rounded-full ${
+                connected ? "bg-green-500" : "bg-yellow-500 animate-pulse"
+              }`}
+            ></div>
+            <span>{connected ? "Live" : "Historical Data"}</span>
           </div>
         </div>
 
@@ -213,7 +245,7 @@ function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {history.slice(0, 5).map((item, idx) => (
+                    {history.map((item, idx) => (
                       <tr
                         key={idx}
                         className="border-b last:border-0 hover:bg-slate-50"
