@@ -10,6 +10,8 @@ A real-time system monitoring and alerting platform that collects system metrics
 - **UI Consumer**: React-based dashboard for real-time metric visualization using MQTT WebSocket and the API
 - **Infrastructure**: MQTT (Mosquitto), MongoDB
 
+![Design](design.png)
+
 ## Prerequisites
 
 - **For Docker**: Docker & Docker Compose
