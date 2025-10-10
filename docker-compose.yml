@@ -42,4 +42,3 @@ volumes:
   mosquitto-logs:
   consumer-logs:
   producer-logs:
-
