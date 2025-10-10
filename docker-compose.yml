@@ -9,6 +9,19 @@ services:
       - mosquitto-data:/mosquitto/data
       - mosquitto-logs:/mosquitto/log
 
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: protexai
+      MONGO_INITDB_ROOT_PASSWORD: protexai123
+      MONGO_INITDB_DATABASE: protexai
+    volumes:
+      - mongodb-data:/data/db
+      - mongodb-config:/data/configdb
+
   consumer:
     build:
       context: ./src
@@ -16,10 +29,14 @@ services:
     container_name: mqtt-consumer
     depends_on:
       - mosquitto
+      - mongodb
     environment:
       MQTT_BROKER_HOST: mosquitto
       MQTT_BROKER_PORT: 1883
       MQTT_TOPIC: protexai/sensors
+      MONGODB_URI: mongodb://protexai:protexai123@mongodb:27017/
+      MONGODB_DATABASE: protexai
+      MONGODB_COLLECTION: metrics
     volumes:
       - consumer-logs:/logs
 
@@ -43,3 +60,5 @@ volumes:
   mosquitto-logs:
   consumer-logs:
   producer-logs:
+  mongodb-data:
+  mongodb-config:
