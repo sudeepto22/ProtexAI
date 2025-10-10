@@ -41,6 +41,7 @@ services:
       SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
       SLACK_CHANNEL: ${SLACK_CHANNEL:-#notifs}
       SLACK_SEND_DURATION_SECONDS: ${SLACK_SEND_DURATION_SECONDS:-30}
+      SLACK_ALERT_CHANNEL: ${SLACK_ALERT_CHANNEL:-#alerts}
     volumes:
       - consumer-logs:/logs
 

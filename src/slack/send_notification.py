@@ -1,9 +1,28 @@
 import logging
 
 from slack_sdk import WebClient
+from slack_sdk.web import SlackResponse
 
 from common.config.slack_config import SlackConfig
 from sensor.model import SystemMetrics
+
+
+def send_slack_message(
+    text: str,
+    channel: str,
+    blocks: list | None = None,
+    attachments: list | None = None,
+) -> SlackResponse:
+    try:
+        client = WebClient(token=SlackConfig.BOT_TOKEN)
+        return client.chat_postMessage(
+            channel=channel,
+            text=text,
+            blocks=blocks,
+            attachments=attachments,
+        )
+    except Exception:
+        raise
 
 
 def send_slack_notification(
@@ -12,15 +31,9 @@ def send_slack_notification(
     """Send notification to Slack"""
     if logger is None:
         logger = logging.getLogger("SlackNotification")
-
     try:
-        if not SlackConfig.BOT_TOKEN:
-            logger.warning("SLACK_BOT_TOKEN not configured, skipping notification")
-            return
-
-        client = WebClient(token=SlackConfig.BOT_TOKEN)
         message_payload = format_metrics_for_slack(metrics)
-        response = client.chat_postMessage(**message_payload)
+        response = send_slack_message(**message_payload)
 
         if not response["ok"]:
             logger.error(f"Failed to send Slack notification: {response['error']}")
@@ -29,6 +42,14 @@ def send_slack_notification(
 
     except Exception as e:
         logger.error(f"Error sending Slack notification: {e}")
+
+
+def send_critical_alert(alert: dict[str, float]) -> None:
+    message = ""
+    if alert:
+        for key, value in alert.items():
+            message += f"\n*{key}*: {value}%"
+    send_slack_message(message, SlackConfig.ALERT_CHANNEL)
 
 
 def format_metrics_for_slack(metrics: SystemMetrics) -> dict:

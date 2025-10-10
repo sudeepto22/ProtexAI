@@ -13,7 +13,7 @@ from common.utils.logger import setup_logger
 from common.utils.mongodb_client import MongoDBClientManager
 from common.utils.mqtt_client import MQTTClient
 from sensor.model import SystemMetrics
-from slack.send_notification import send_slack_notification
+from slack.send_notification import send_critical_alert, send_slack_notification
 
 logger = setup_logger("Consumer")
 config = MQTTConfig()
@@ -39,6 +39,11 @@ def on_message(_client: mqtt.Client, _userdata: Any, msg: mqtt.MQTTMessage) -> N
         metrics = SystemMetrics.from_json(message_json)
 
         logger.info(f"Metrics: {metrics}")
+
+        alert = metrics.is_critical()
+        if alert:
+            logger.warning(f"Alert: {alert}")
+            send_critical_alert(alert)
 
         insert_to_database(metrics)
 

@@ -2,6 +2,8 @@ from typing import List
 
 from pydantic import BaseModel, Field
 
+CRITICAL_THRESHOLD = 80
+
 
 class CPUMetrics(BaseModel):
     usage_percent: float = Field(..., description="Overall CPU usage percentage")
@@ -84,3 +86,25 @@ class SystemMetrics(BaseModel):
     @classmethod
     def from_dict(cls, data: dict) -> "SystemMetrics":
         return cls.model_validate(data)
+
+    def _set_alert(self, threshold: int) -> dict[str, float]:
+        alert = {}
+        if self.cpu.usage_percent > threshold:
+            alert["cpu"] = self.cpu.usage_percent
+        if self.gpu[0].load_percent > threshold if self.gpu else False:
+            alert["gpu"] = self.gpu[0].load_percent if self.gpu else 0.0
+        if self.ram.usage_percent > threshold:
+            alert["ram"] = self.ram.usage_percent
+        if self.disk.usage_percent > threshold:
+            alert["disk"] = self.disk.usage_percent
+
+        for temp in self.temperature if self.temperature else []:
+            if temp.temperature_c > threshold:
+                alert[f"{temp.label}_temp"] = temp.temperature_c
+
+        return alert
+
+    def is_critical(self) -> dict[str, float] | None:
+        alert = self._set_alert(CRITICAL_THRESHOLD)
+        if alert:
+            return alert
