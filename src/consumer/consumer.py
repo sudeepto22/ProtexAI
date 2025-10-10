@@ -1,4 +1,5 @@
 import time
+import uuid
 from typing import Any
 
 import paho.mqtt.client as mqtt
@@ -48,21 +49,23 @@ def on_message(_client: mqtt.Client, _userdata: Any, msg: mqtt.MQTTMessage) -> N
 
 
 def start_consumer() -> None:
+    # Generate unique client ID to allow multiple consumer instances
+    client_id = f"protexai-consumer-{uuid.uuid4().hex[:8]}"
+
     logger.info(
-        f"MQTT Broker: {config.BROKER_HOST}:{config.BROKER_PORT} Topic: {config.TOPIC}"
+        f"MQTT Broker: {config.BROKER_HOST}:{config.BROKER_PORT} Topic: {config.TOPIC} Client ID: {client_id}`"
     )
 
     try:
         with MQTTClient(
-            client_id="protexai-consumer",
+            client_id=client_id,
             logger=logger,
             on_message=on_message,
-            background_loop=True,
         ) as client:
             client.subscribe(config.TOPIC)
             logger.info("Consumer running (Press Ctrl+C to stop)")
             while True:
-                time.sleep(1)
+                time.sleep(0.1)
 
     except KeyboardInterrupt:
         logger.info("Consumer stopped by user")

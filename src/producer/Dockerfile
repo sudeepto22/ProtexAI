@@ -14,6 +14,7 @@ RUN mkdir -p /logs
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
+ENV LOG_DIR=/logs
 
 CMD ["python", "producer.py"]
 

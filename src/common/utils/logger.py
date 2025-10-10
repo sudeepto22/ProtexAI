@@ -1,20 +1,25 @@
 import logging
+import os
 from pathlib import Path
 
 
-def setup_logger(name: str, log_dir: str = "/logs") -> logging.Logger:
+def setup_logger(name: str, log_dir: str | None = None) -> logging.Logger:
     """
     Setup and configure a logger with file and console handlers
 
     Args:
         name: Logger name (e.g., 'Producer', 'Consumer')
-        log_dir: Directory to store log files (default: '/logs')
+        log_dir: Directory to store log files (default: './logs' locally, '/logs' in Docker)
 
     Returns:
         Configured logger instance
     """
+    # Use environment variable, provided arg, or default to local logs directory
+    if log_dir is None:
+        log_dir = os.getenv("LOG_DIR", "./logs")
+
     log_path = Path(log_dir)
-    log_path.mkdir(exist_ok=True)
+    log_path.mkdir(parents=True, exist_ok=True)
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)

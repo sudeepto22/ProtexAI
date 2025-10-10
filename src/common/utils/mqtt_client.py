@@ -19,14 +19,14 @@ class MQTTClient:
         client_id: str,
         logger: logging.Logger,
         on_message: Callable | None = None,
-        background_loop: bool = False,
+        loop_forever: bool = False,
     ) -> None:
         """
         Arguments:
             client_id: Client identifier
             logger: Logger instance
             on_message: Optional callback for message reception (for consumers)
-            background_loop: If True, start loop_start(), otherwise use manual loop
+            loop_forever: If True, start loop_forever(), otherwise use loop_start()
 
         Returns:
             None
@@ -34,7 +34,7 @@ class MQTTClient:
         self.client_id = client_id
         self.logger = logger
         self.on_message = on_message
-        self.background_loop = background_loop
+        self.loop_forever = loop_forever
         self.client = None
         self.config = MQTTConfig()
 
@@ -63,12 +63,12 @@ class MQTTClient:
                 keepalive=self.config.KEEPALIVE,
             )
 
-            # Start background loop if requested (needed for connection to complete)
-            if self.background_loop:
+            if self.loop_forever:
+                self.client.loop_forever()
+            else:
                 self.client.loop_start()
-                time.sleep(2)  # Give loop time to establish connection
-                self.logger.info("Background network loop started")
 
+            time.sleep(2)
             self.logger.info("Connected to MQTT broker")
 
             return self.client
@@ -88,11 +88,9 @@ class MQTTClient:
         """
         if self.client:
             try:
-                # Stop network loop if it was started
-                if self.background_loop:
+                if not self.loop_forever:
                     try:
                         self.client.loop_stop()
-                        self.logger.info("Network loop stopped")
                     except Exception:
                         pass
 

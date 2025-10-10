@@ -1,4 +1,5 @@
 import time
+import uuid
 
 import paho.mqtt.client as mqtt
 
@@ -56,14 +57,14 @@ def publish_messages(
 
 
 def start_producer() -> None:
+    # Generate unique client ID to allow multiple producer instances
+    client_id = f"protexai-producer-{uuid.uuid4().hex[:8]}"
     logger.info(
-        f"MQTT Broker: {config.BROKER_HOST}:{config.BROKER_PORT} Topic: {config.TOPIC}"
+        f"MQTT Broker: {config.BROKER_HOST}:{config.BROKER_PORT} Topic: {config.TOPIC} Client ID: {client_id}`"
     )
 
     try:
-        with MQTTClient(
-            client_id="protexai-producer", logger=logger, background_loop=True
-        ) as client:
+        with MQTTClient(client_id=client_id, logger=logger) as client:
             publish_messages(client)
 
     except KeyboardInterrupt:

@@ -16,8 +16,8 @@ from sensor.model import (
 
 
 def get_cpu_usage() -> CPUMetrics:
-    cpu_percent_total = psutil.cpu_percent(interval=0)
-    cpu_percent_per_core = psutil.cpu_percent(interval=0, percpu=True)
+    cpu_percent_total = psutil.cpu_percent(interval=5)
+    cpu_percent_per_core = psutil.cpu_percent(interval=5, percpu=True)
     cpu_freq = psutil.cpu_freq()
     cpu_count_physical = psutil.cpu_count(logical=False)
     cpu_count_logical = psutil.cpu_count(logical=True)
@@ -47,7 +47,7 @@ def get_gpu_usage() -> list[GPUMetrics] | None:
         if result.returncode != 0 or not result.stdout.strip():
             return None
         data = json.loads(result.stdout)
-        a = [
+        return [
             GPUMetrics(
                 name=gpu_name,
                 load_percent=float(gpu_info["GPU use (%)"]),
@@ -64,10 +64,7 @@ def get_gpu_usage() -> list[GPUMetrics] | None:
             )
             for gpu_name, gpu_info in data.items()
         ]
-        print(a)
-        return a
-    except Exception as e:
-        print(e)
+    except Exception:
         return None
 
 
